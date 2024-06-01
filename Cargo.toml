@@ -1,0 +1,15 @@
+[package]
+name = "bulletproof"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+curve25519-dalek = { version = "2", features = ["u64_backend", "nightly", "serde", "alloc"] }
+rand = { version = "0.7" }
+sha3 = { version = "0.8", default-features = false }
+serde = "1.0.203"
+byteorder = "1.5.0"
+anyhow = "1.0.86"
+tracing = "0.1.40"
