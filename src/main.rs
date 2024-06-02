@@ -224,24 +224,32 @@ pub fn generate_proof(
 }
 
 fn main() {
-    let v = 5;
-    let n = 8;
+    let date = chrono::Utc::now().date_naive();
+    let date_personal = chrono::NaiveDate::from_ymd_opt(2004, 7, 13).unwrap();
+    println!("Date: {}", date);
+    println!("Date personal: {}", date_personal);
+
+    let date_before = date.checked_sub_months(chrono::Months::new(12 * 18)).unwrap().checked_add_days(chrono::Days::new(1)).unwrap();
+    println!("Date before: {:?}", date_before);
+
+    let date_hundred_years_before = date_before.checked_sub_days(chrono::Days::new(65536)).unwrap();
+
+    let amount_of_days = (date_personal - date_hundred_years_before).num_days();
+
+    let rng = &mut thread_rng();
 
     let bit_challenge = BitChallenge {
-        y: Scalar::random(&mut thread_rng()),
-        z: Scalar::random(&mut thread_rng()),
+        y: Scalar::random(rng),
+        z: Scalar::random(rng),
     };
-
     let poly_challenge = PolyChallenge {
-        x: Scalar::random(&mut thread_rng()),
+        x: Scalar::random(rng),
     };
 
-    let proof_data = generate_proof(v, n, bit_challenge, poly_challenge);
+    let proof = generate_proof(amount_of_days as u64, 16, bit_challenge, poly_challenge);
+    let result = RangeProof::verify_proof(proof, bit_challenge, poly_challenge);
 
-    match RangeProof::verify_proof(proof_data, bit_challenge, poly_challenge) {
-        Ok(_) => println!("Proof is valid"),
-        Err(e) => println!("Proof is invalid: {:?}", e),
-    }
+    println!("Verification result: {:?}", result);
 }
 
 #[cfg(test)]
