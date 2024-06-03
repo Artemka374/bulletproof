@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 use std::iter;
+use chrono::NaiveDate;
 
 use curve25519_dalek::scalar::Scalar;
 use rand::thread_rng;
@@ -223,31 +224,35 @@ pub fn generate_proof(
     }
 }
 
-fn main() {
+fn prove_age(birth_date: NaiveDate, bc: BitChallenge, pc: PolyChallenge) -> VerifierData {
     let date = chrono::Utc::now().date_naive();
-    let date_personal = chrono::NaiveDate::from_ymd_opt(2004, 7, 13).unwrap();
-    println!("Date: {}", date);
-    println!("Date personal: {}", date_personal);
-
+    println!("Starting generating proofs for birth date {birth_date} with current date {date}");
     let date_before = date.checked_sub_months(chrono::Months::new(12 * 18)).unwrap().checked_add_days(chrono::Days::new(1)).unwrap();
-    println!("Date before: {:?}", date_before);
 
     let date_hundred_years_before = date_before.checked_sub_days(chrono::Days::new(65536)).unwrap();
 
-    let amount_of_days = (date_personal - date_hundred_years_before).num_days();
+    let amount_of_days = (birth_date - date_hundred_years_before).num_days();
+
+    generate_proof(amount_of_days as u64, 16, bc, pc)
+}
+
+fn main() {
+    let birth_date = NaiveDate::from_ymd_opt(2007, 7, 13).unwrap();
 
     let rng = &mut thread_rng();
-
-    let bit_challenge = BitChallenge {
+    
+    let bc = BitChallenge {
         y: Scalar::random(rng),
         z: Scalar::random(rng),
     };
-    let poly_challenge = PolyChallenge {
+
+    let pc = PolyChallenge{
         x: Scalar::random(rng),
     };
 
-    let proof = generate_proof(amount_of_days as u64, 16, bit_challenge, poly_challenge);
-    let result = RangeProof::verify_proof(proof, bit_challenge, poly_challenge);
+    let proof = prove_age(birth_date, bc, pc);
+    
+    let result = RangeProof::verify_proof(proof, bc, pc);
 
     println!("Verification result: {:?}", result);
 }
